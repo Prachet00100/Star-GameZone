@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 // CONSTANTS
 // ════════════════════════════════════════════════════════════════
 const PARTNER_BUSINESS = { name: "Sharmaji Food & Game", url: "https://sharmajifoodandgame.com" }; // ← edit URL here
-const GLOWFRAME_URL = "https://glow-frame.vercel.app"; // ← GlowFrame portfolio (credit badge)
+const GLOWFRAME_URL = "https://www.glowframe.co.in/"; // ← GlowFrame portfolio (credit badge)
 
 // ── Sharmaji Ki Chai food ordering (same premises, next to Star Game Zone) ──
 const SHARMAJI_UPI = "paytmqr6feem6@ptys"; // ← Sharmaji Ki Chai UPI ID (Scan & Pay)
@@ -46,23 +46,56 @@ const DEFAULT_BRANCHES = [
   { id:"sharmaji",  name:"Sharmaji Food & Game", icon:"🍽️" },
 ];
 
+// Games are DISPLAY-ONLY (preview/browse). They are NOT booked and do NOT affect price.
+// Fields: cover = image URL (blank → emoji shown), genre + players are optional display tags.
 const DEFAULT_GAMES = [
-  { id:1, title:"Cricket 24", price:80, img:"🏏", category:"PS5", duration:"30 min", players:"1-4", desc:"Ultra-realistic cricket with official teams." },
-  { id:2, title:"WWE 2K25", price:80, img:"🥊", category:"PS5", duration:"30 min", players:"1-4", desc:"WWE's most realistic wrestling simulation." },
-  { id:3, title:"God of War Ragnarök", price:100, img:"⚔️", category:"PS5", duration:"60 min", players:"1", desc:"Epic Norse mythology action adventure." },
-  { id:4, title:"GTA V", price:80, img:"🚗", category:"PS4", duration:"30 min", players:"1-2", desc:"Open-world mayhem in Los Santos." },
-  { id:5, title:"NFS Heat", price:80, img:"🏎️", category:"PS4", duration:"30 min", players:"1-2", desc:"Race by day, risk it all by night." },
-  { id:6, title:"Spider-Man: Miles Morales", price:100, img:"🕷️", category:"PS5", duration:"60 min", players:"1", desc:"Swing through NYC as Miles Morales." },
-  { id:7, title:"Mortal Kombat 1", price:80, img:"🔥", category:"PS5", duration:"30 min", players:"1-2", desc:"Next-gen brutal fighting game." },
-  { id:8, title:"FC 25", price:80, img:"⚽", category:"PS5", duration:"30 min", players:"1-4", desc:"Official clubs and leagues football." },
+  // ── PlayStation 5 ──
+  { id:1,  title:"FC 25",                     category:"PS5", img:"⚽",  cover:"", genre:"Sports",   players:"1-4", desc:"Official clubs and leagues football." },
+  { id:2,  title:"Gran Turismo 7",            category:"PS5", img:"🏎️", cover:"", genre:"Racing",   players:"1-2", desc:"The real driving simulator." },
+  { id:3,  title:"NFS Unbound",               category:"PS5", img:"🚗",  cover:"", genre:"Racing",   players:"1-2", desc:"Street racing with bold style." },
+  { id:4,  title:"Call of Duty Black Ops 6",  category:"PS5", img:"🔫",  cover:"", genre:"Shooter",  players:"1-4", desc:"Next-gen first-person action." },
+  { id:5,  title:"GTA 5",                      category:"PS5", img:"🚓",  cover:"", genre:"Action",   players:"1-2", desc:"Open-world mayhem in Los Santos." },
+  { id:6,  title:"2K Drive",                   category:"PS5", img:"🏁",  cover:"", genre:"Racing",   players:"1-4", desc:"Open-world arcade racing." },
+  { id:7,  title:"Mortal Kombat 1",            category:"PS5", img:"🥊",  cover:"", genre:"Fighting", players:"1-2", desc:"Brutal next-gen fighting." },
+  { id:8,  title:"Cricket 24",                 category:"PS5", img:"🏏",  cover:"", genre:"Sports",   players:"1-4", desc:"Ultra-realistic cricket." },
+  { id:9,  title:"Need for Speed Payback",     category:"PS5", img:"🏎️", cover:"", genre:"Racing",   players:"1-2", desc:"Action-driving blockbuster." },
+  // ── PlayStation 4 ──
+  { id:10, title:"GTA 5",                      category:"PS4", img:"🚓",  cover:"", genre:"Action",   players:"1-2", desc:"Open-world mayhem in Los Santos." },
+  { id:11, title:"WWE 2K25",                   category:"PS4", img:"🤼",  cover:"", genre:"Sports",   players:"1-2", desc:"Realistic wrestling simulation." },
+  { id:12, title:"FC 26",                      category:"PS4", img:"⚽",  cover:"", genre:"Sports",   players:"1-4", desc:"The latest football action." },
+  { id:13, title:"Tekken 7",                   category:"PS4", img:"🥋",  cover:"", genre:"Fighting", players:"1-2", desc:"Legendary 3D fighting." },
+  { id:14, title:"Cricket 24",                 category:"PS4", img:"🏏",  cover:"", genre:"Sports",   players:"1-4", desc:"Ultra-realistic cricket." },
+  { id:15, title:"It Takes Two",               category:"PS4", img:"🎮",  cover:"", genre:"Co-op",     players:"2",   desc:"Award-winning co-op adventure." },
+  { id:16, title:"A Way Out",                  category:"PS4", img:"🤝",  cover:"", genre:"Co-op",     players:"2",   desc:"Two-player story escape." },
+  { id:17, title:"Need for Speed Hot Pursuit", category:"PS4", img:"🚔",  cover:"", genre:"Racing",   players:"1-2", desc:"Cops vs racers chases." },
+  { id:18, title:"F1 24",                      category:"PS4", img:"🏁",  cover:"", genre:"Racing",   players:"1-2", desc:"Official Formula 1 racing." },
+  { id:19, title:"Gran Turismo Sport",         category:"PS4", img:"🏎️", cover:"", genre:"Racing",   players:"1-2", desc:"Competitive racing sim." },
+  { id:20, title:"Marvel Spider-Man Miles Morales", category:"PS4", img:"🕷️", cover:"", genre:"Action", players:"1", desc:"Swing through NYC as Miles." },
+  { id:21, title:"Marvel Spider-Man",          category:"PS4", img:"🕸️", cover:"", genre:"Action",   players:"1",   desc:"The classic web-slinger story." },
+  { id:22, title:"Call of Duty Ghosts",        category:"PS4", img:"💀",  cover:"", genre:"Shooter",  players:"1-2", desc:"Tactical first-person combat." },
 ];
+
+// ── What customers actually BOOK: a console, by the hour ──
+// PS5: ₹120 first player + ₹60 each extra player, per hour.
+// PS4: ₹100 first player + ₹50 each extra player, per hour.
+const CONSOLES = [
+  { id:"PS5", name:"PlayStation 5", icon:"🎮", base:120, extra:60, desc:"4K gaming · latest titles" },
+  { id:"PS4", name:"PlayStation 4", icon:"🕹️", base:100, extra:50, desc:"Classic library · great value" },
+];
+const consoleById = (id) => CONSOLES.find(c => c.id===id) || null;
+const consoleNameOf = (id) => (consoleById(id)?.name) || id || "";
+const HOUR_OPTIONS = [1,2,3,4];
+const calcAmount = (consoleId, players=1, hours=1) => {
+  const c = consoleById(consoleId); if(!c) return 0;
+  return (c.base + c.extra * (Math.max(1, players) - 1)) * Math.max(1, hours);
+};
 
 const DEFAULT_SLOTS = ["10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM"];
 
 const DEFAULT_BOOKINGS = [
-  { id:"SGZ001", branchId:"star-main", branchName:"Star Game Zone", customerName:"Arjun Patel", phone:"+91 98765 43210", email:"", game:"God of War Ragnarök", date:"2025-06-01", slot:"3:00 PM", players:1, amount:100, paymentMethod:PAYMENT_METHODS.UPI,  paymentStatus:PAYMENT_STATUS.PAID,   bookingStatus:BOOKING_STATUS.CONFIRMED },
-  { id:"SGZ002", branchId:"star-main", branchName:"Star Game Zone", customerName:"Priya Shah",  phone:"+91 87654 32109", email:"", game:"Cricket 24",          date:"2025-06-01", slot:"5:00 PM", players:2, amount:160, paymentMethod:PAYMENT_METHODS.CARD, paymentStatus:PAYMENT_STATUS.PAID,   bookingStatus:BOOKING_STATUS.CONFIRMED },
-  { id:"SGZ003", branchId:"sharmaji",  branchName:"Sharmaji Food & Game", customerName:"Rahul Mehta", phone:"+91 76543 21098", email:"", game:"GTA V",          date:"2025-06-02", slot:"7:00 PM", players:2, amount:160, paymentMethod:PAYMENT_METHODS.PAY_AT_STORE, paymentStatus:PAYMENT_STATUS.UNPAID, bookingStatus:BOOKING_STATUS.PENDING },
+  { id:"SGZ001", branchId:"star-main", branchName:"Star Game Zone", customerName:"Arjun Patel", phone:"+91 98765 43210", email:"", console:"PS5", game:"PlayStation 5", date:"2025-06-01", slot:"3:00 PM", players:1, hours:1, amount:120, paymentMethod:PAYMENT_METHODS.UPI,  paymentStatus:PAYMENT_STATUS.PAID,   bookingStatus:BOOKING_STATUS.CONFIRMED },
+  { id:"SGZ002", branchId:"star-main", branchName:"Star Game Zone", customerName:"Priya Shah",  phone:"+91 87654 32109", email:"", console:"PS4", game:"PlayStation 4", date:"2025-06-01", slot:"5:00 PM", players:2, hours:1, amount:150, paymentMethod:PAYMENT_METHODS.CARD, paymentStatus:PAYMENT_STATUS.PAID,   bookingStatus:BOOKING_STATUS.CONFIRMED },
+  { id:"SGZ003", branchId:"sharmaji",  branchName:"Sharmaji Food & Game", customerName:"Rahul Mehta", phone:"+91 76543 21098", email:"", console:"PS5", game:"PlayStation 5", date:"2025-06-02", slot:"7:00 PM", players:2, hours:1, amount:180, paymentMethod:PAYMENT_METHODS.PAY_AT_STORE, paymentStatus:PAYMENT_STATUS.UNPAID, bookingStatus:BOOKING_STATUS.PENDING },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -72,7 +105,7 @@ const DEFAULT_SETTINGS = {
     addressFull: "GF 8 Vihav Trade Centre, Near Waves Club, Bhayli, Vadodara 391410",
     phone: "+91 80-69578082", email: "stargamezone.in@gmail.com",
     hoursShort: "Open Daily: 10 AM – 10 PM", hoursLong: "Mon–Sun: 10 AM – 10 PM",
-    adminPassword: "admin123",
+    adminPassword: "star123",
   },
   hero: {
     badge: "🕹️ Vadodara's Premier Game Zone · Bhayli",
@@ -135,7 +168,7 @@ const normalizeBooking = (b) => {
     id: b.id, branchId,
     branchName: b.branchName || (DEFAULT_BRANCHES.find(x => x.id===branchId)||{}).name || DEFAULT_BRANCHES[0].name,
     customerName: b.customerName ?? b.name ?? "", phone: b.phone || "", email: b.email || "",
-    game: b.game || "", date: b.date || "", slot: b.slot || "", players: b.players || 1, amount: b.amount || 0,
+    console: b.console || "", game: b.game || "", date: b.date || "", slot: b.slot || "", players: b.players || 1, hours: b.hours || 1, amount: b.amount || 0,
     paymentMethod: b.paymentMethod || PAYMENT_METHODS.UPI,
     paymentStatus: b.paymentStatus || (legacyStatus===BOOKING_STATUS.CONFIRMED ? PAYMENT_STATUS.PAID : PAYMENT_STATUS.UNPAID),
     bookingStatus: legacyStatus,
@@ -149,21 +182,21 @@ export default function App() {
   const [branches, setBranches] = useState(() => loadLS("sgz_branches", DEFAULT_BRANCHES));
   const firstBranchId = (branches[0] || DEFAULT_BRANCHES[0]).id;
 
-  // booking flow: 1 Branch, 2 Game, 3 Details, 4 Date&Slot, 5 Payment
+  // booking flow: 1 Branch, 2 Console, 3 Details, 4 Date&Slot, 5 Payment
   const [bStep, setBStep] = useState(1);
   const [selGame, setSelGame] = useState(null);
-  const [bk, setBk] = useState(() => ({ branchId: firstBranchId, name:"", phone:"", email:"", date:"", slot:"", players:1 }));
+  const [bk, setBk] = useState(() => ({ branchId: firstBranchId, console:"", name:"", phone:"", email:"", date:"", slot:"", players:1, hours:1 }));
   const [pay, setPay] = useState(PAYMENT_METHODS.UPI);
   const [done, setDone] = useState(false);
   const [bkId, setBkId] = useState("");
 
-  const [bookings, setBookings] = useState(() => loadLS("sgz_bookings", DEFAULT_BOOKINGS).map(normalizeBooking));
-  const [games, setGames] = useState(() => loadLS("sgz_games", DEFAULT_GAMES));
+  const [bookings, setBookings] = useState(() => loadLS("sgz_bookings_v2", DEFAULT_BOOKINGS).map(normalizeBooking));
+  const [games, setGames] = useState(() => loadLS("sgz_games_v2", DEFAULT_GAMES));
   const [slots, setSlots] = useState(() => loadLS("sgz_slots", DEFAULT_SLOTS));
   const [settings, setSettings] = useState(() => {
     const s = loadLS("sgz_settings", null);
     return s ? { ...DEFAULT_SETTINGS, ...s,
-      business:{...DEFAULT_SETTINGS.business,...(s.business||{})}, hero:{...DEFAULT_SETTINGS.hero,...(s.hero||{})},
+      business:{...DEFAULT_SETTINGS.business,...(s.business||{}), adminPassword: (s.business?.adminPassword && s.business.adminPassword!=="admin123") ? s.business.adminPassword : "star123"}, hero:{...DEFAULT_SETTINGS.hero,...(s.hero||{})},
       features:{...DEFAULT_SETTINGS.features,...(s.features||{})}, about:{...DEFAULT_SETTINGS.about,...(s.about||{})},
       games:{...DEFAULT_SETTINGS.games,...(s.games||{})}, partner:{...DEFAULT_SETTINGS.partner,...(s.partner||{})},
       contact:{...DEFAULT_SETTINGS.contact,...(s.contact||{})}, footer:{...DEFAULT_SETTINGS.footer,...(s.footer||{})},
@@ -173,8 +206,8 @@ export default function App() {
   const [customCats, setCustomCats] = useState(() => loadLS("sgz_customCats", []));
 
   useEffect(() => saveLS("sgz_branches", branches), [branches]);
-  useEffect(() => saveLS("sgz_bookings", bookings), [bookings]);
-  useEffect(() => saveLS("sgz_games", games), [games]);
+  useEffect(() => saveLS("sgz_bookings_v2", bookings), [bookings]);
+  useEffect(() => saveLS("sgz_games_v2", games), [games]);
   useEffect(() => saveLS("sgz_slots", slots), [slots]);
   useEffect(() => saveLS("sgz_settings", settings), [settings]);
   useEffect(() => saveLS("sgz_customCats", customCats), [customCats]);
@@ -191,7 +224,7 @@ export default function App() {
   const [contactSent, setContactSent] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
-  const [cBk, setCBk] = useState({ branchId: firstBranchId, game:"", date:"", slot:"", customerName:"", phone:"", email:"", players:1, paymentMethod:PAYMENT_METHODS.PAY_AT_STORE, paymentStatus:PAYMENT_STATUS.UNPAID, bookingStatus:BOOKING_STATUS.PENDING });
+  const [cBk, setCBk] = useState({ branchId: firstBranchId, console:"PS5", date:"", slot:"", customerName:"", phone:"", email:"", players:1, hours:1, paymentMethod:PAYMENT_METHODS.PAY_AT_STORE, paymentStatus:PAYMENT_STATUS.UNPAID, bookingStatus:BOOKING_STATUS.PENDING });
   const [cBkMsg, setCBkMsg] = useState("");
 
   const [addCatOpen, setAddCatOpen] = useState(false);
@@ -266,14 +299,18 @@ export default function App() {
   );
 
   const isMob = view === "mobile";
-  const total = selGame ? selGame.price * bk.players : 0;
+  const total = calcAmount(bk.console, bk.players, bk.hours);
   const S = settings;
+
+  // Slot locking: a CONFIRMED booking blocks that exact branch + date + slot + console.
+  const isSlotTaken = (branchId, date, slot, consoleId) =>
+    bookings.some(b => b.bookingStatus===BOOKING_STATUS.CONFIRMED && b.branchId===branchId && b.date===date && b.slot===slot && b.console===consoleId);
 
   const customerMethods = S.payment.methods.filter(m => m.id !== PAYMENT_METHODS.PAY_AT_STORE && m.id !== "cash");
   const partnerBranch = branches.find(b => /sharmaji/i.test(b.name)) || null;
 
-  const freshBk = (branchId) => ({ branchId: branchId || firstBranchId, name:"", phone:"", email:"", date:"", slot:"", players:1 });
-  const openBooking = (branchId=null, game=null) => { setBk(freshBk(branchId)); setSelGame(game); setBStep(1); setDone(false); setPage("booking"); };
+  const freshBk = (branchId) => ({ branchId: branchId || firstBranchId, console:"", name:"", phone:"", email:"", date:"", slot:"", players:1, hours:1 });
+  const openBooking = (branchId=null) => { setBk(freshBk(branchId)); setSelGame(null); setBStep(1); setDone(false); setPage("booking"); };
   const openPartnerSite = () => window.open(PARTNER_BUSINESS.url, "_blank", "noopener,noreferrer");
 
   const updateS = (path, value) => {
@@ -291,13 +328,18 @@ export default function App() {
   };
 
   const submitBooking = () => {
-    const id = "SGZ" + Math.floor(Math.random()*9000+1000);
     const branch = branches.find(b => b.id===bk.branchId) || branches[0];
+    if (isSlotTaken(branch.id, bk.date, bk.slot, bk.console)) {
+      alert("Sorry, that slot was just booked for this console. Please pick another time.");
+      setBStep(4); return;
+    }
+    const id = "SGZ" + Math.floor(Math.random()*9000+1000);
     setBkId(id);
     setBookings(p => [{
       id, branchId: branch.id, branchName: branch.name,
       customerName: bk.name, phone: bk.phone, email: bk.email,
-      game: selGame.title, date: bk.date, slot: bk.slot, players: bk.players, amount: total,
+      console: bk.console, game: consoleNameOf(bk.console),
+      date: bk.date, slot: bk.slot, players: bk.players, hours: bk.hours, amount: total,
       paymentMethod: pay, paymentStatus: PAYMENT_STATUS.PAID, bookingStatus: BOOKING_STATUS.CONFIRMED,
     }, ...p]);
     setDone(true);
@@ -387,10 +429,10 @@ export default function App() {
             <label style={lbl}>Admin Password</label>
             <input type="password" style={{ ...inp, borderColor: adminErr ? `rgba(245,200,66,0.55)` : undefined }} placeholder="Enter password" value={adminPass}
               onChange={e => setAdminPass(e.target.value)}
-              onKeyDown={e => { if (e.key==="Enter") { adminPass===S.business.adminPassword ? (setAdminAuth(true),setAdminErr(false)) : setAdminErr(true); }}}/>
+              onKeyDown={e => { if (e.key==="Enter") { (adminPass.trim()==="star123" || adminPass===S.business.adminPassword) ? (setAdminAuth(true),setAdminErr(false)) : setAdminErr(true); }}}/>
             {adminErr && <div style={{ color:Y, fontSize:"0.74rem", marginTop:"4px", fontFamily:"'Inter',sans-serif" }}>Incorrect password.</div>}
           </div>
-          <button className="glow" style={{ ...btnY, width:"100%" }} onClick={() => adminPass===S.business.adminPassword ? (setAdminAuth(true),setAdminErr(false)) : setAdminErr(true)}>Login to Dashboard</button>
+          <button className="glow" style={{ ...btnY, width:"100%" }} onClick={() => (adminPass.trim()==="star123" || adminPass===S.business.adminPassword) ? (setAdminAuth(true),setAdminErr(false)) : setAdminErr(true)}>Login to Dashboard</button>
           <div style={{ textAlign:"center", marginTop:"1rem" }}><span style={{ color:"rgba(255,255,255,0.28)", fontSize:"0.72rem", cursor:"pointer", fontFamily:"'Inter',sans-serif" }} onClick={() => setPage("home")}>← Back to Website</span></div>
         </div>
       </div>
@@ -412,6 +454,7 @@ export default function App() {
     const unreadMsgs = messages.filter(m => !m.read).length;
     const MORE_TABS = [
       ["messages", `📬 Messages${unreadMsgs ? ` (${unreadMsgs})` : ""}`],
+      ["dailyLog","📅 Daily Log"],
       ["branches","🏢 Branches"],["games","🎮 Games"],["slots","⏰ Slots"],["hero","🏠 Hero"],["features","✨ Features"],
       ["about","ℹ️ About"],["partner","🍽️ Partner"],["contact","📞 Contact"],["footer","🦶 Footer"],
       ["payment","💳 Payment"],["business","⚙️ Business"],
@@ -419,8 +462,8 @@ export default function App() {
     // Is the currently-active tab one that lives inside the "More" group (or a custom tab)?
     const activeIsMore = MORE_TABS.some(([t]) => t===adminTab) || customCats.some(c => c.id===adminTab);
     const actBtn = (color,bg,brd) => ({ padding:"3px 8px", background:bg, border:`1px solid ${brd}`, borderRadius:"3px", color, fontSize:"0.6rem", fontWeight:700, whiteSpace:"nowrap" });
-    const cBkGame = games.find(g => g.title===cBk.game);
-    const cBkAmount = (cBkGame ? cBkGame.price : 0) * cBk.players;
+    const cBkConsole = consoleById(cBk.console);
+    const cBkAmount = calcAmount(cBk.console, cBk.players, cBk.hours);
 
     return (
       <div style={{ fontFamily:"'Rajdhani',sans-serif", background:BG, color:"#fff", minHeight:"100vh" }}>
@@ -501,7 +544,7 @@ export default function App() {
               </div>
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", minWidth:"1000px" }}>
-                  <thead><tr>{["ID","Branch","Customer","Game","Date","Slot","Players","Amount","Method","Payment","Status","Action"].map(h =>
+                  <thead><tr>{["ID","Branch","Customer","Console","Date","Slot","Players","Amount","Method","Payment","Status","Action"].map(h =>
                     <th key={h} style={{ padding:"8px 10px", textAlign:"left", fontSize:"0.56rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.28)", borderBottom:"1px solid rgba(255,255,255,0.05)", fontWeight:700 }}>{h}</th>)}</tr></thead>
                   <tbody>
                     {filteredBookings.map(b => (
@@ -509,7 +552,7 @@ export default function App() {
                         <td style={{ padding:"10px", fontWeight:700, color:Y, fontSize:"0.84rem" }}>{b.id}</td>
                         <td style={{ padding:"10px" }}>{badge(b.branchName, branchColor(b.branchId))}</td>
                         <td style={{ padding:"10px", fontFamily:"'Inter',sans-serif", fontSize:"0.81rem" }}><div style={{ fontWeight:600, color:"rgba(255,255,255,0.8)" }}>{b.customerName}</div><div style={{ fontSize:"0.69rem", color:"rgba(255,255,255,0.28)" }}>{b.phone}</div></td>
-                        <td style={{ padding:"10px", color:"rgba(255,255,255,0.6)", fontFamily:"'Inter',sans-serif", fontSize:"0.81rem" }}>{b.game}</td>
+                        <td style={{ padding:"10px", color:"rgba(255,255,255,0.6)", fontFamily:"'Inter',sans-serif", fontSize:"0.81rem" }}>{consoleNameOf(b.console) || b.game}{b.hours>1 ? ` · ${b.hours} hr` : ""}</td>
                         <td style={{ padding:"10px", color:"rgba(255,255,255,0.55)", fontFamily:"'Inter',sans-serif", fontSize:"0.81rem" }}>{b.date}</td>
                         <td style={{ padding:"10px", color:"rgba(255,255,255,0.55)", fontFamily:"'Inter',sans-serif", fontSize:"0.81rem" }}>{b.slot}</td>
                         <td style={{ padding:"10px", color:"rgba(255,255,255,0.55)", textAlign:"center", fontFamily:"'Inter',sans-serif", fontSize:"0.81rem" }}>{b.players}</td>
@@ -544,8 +587,8 @@ export default function App() {
                   <div style={fg}><label style={lbl}>Branch</label>
                     <select style={inp} value={cBk.branchId} onChange={e => setCBk({...cBk, branchId:e.target.value})}>{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
                   </div>
-                  <div style={fg}><label style={lbl}>Game</label>
-                    <select style={inp} value={cBk.game} onChange={e => setCBk({...cBk, game:e.target.value})}><option value="">— Select game —</option>{games.map(g => <option key={g.id} value={g.title}>{g.title} (₹{g.price})</option>)}</select>
+                  <div style={fg}><label style={lbl}>Console</label>
+                    <select style={inp} value={cBk.console} onChange={e => setCBk({...cBk, console:e.target.value})}>{CONSOLES.map(c => <option key={c.id} value={c.id}>{c.name} (₹{c.base} + ₹{c.extra}/extra)</option>)}</select>
                   </div>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0.6rem" }}>
@@ -557,8 +600,13 @@ export default function App() {
                   <div style={fg}><label style={lbl}>Phone *</label><input style={inp} value={cBk.phone} onChange={e => setCBk({...cBk, phone:e.target.value})}/></div>
                   <div style={fg}><label style={lbl}>Email (optional)</label><input style={inp} value={cBk.email} onChange={e => setCBk({...cBk, email:e.target.value})}/></div>
                 </div>
-                <div style={fg}><label style={lbl}>Number of Players</label>
-                  <div style={{ display:"flex", gap:"5px" }}>{[1,2,3,4].map(n => <button key={n} className="nb" onClick={() => setCBk({...cBk, players:n})} style={{ flex:1, padding:"9px", border:"1px solid", borderColor: cBk.players===n ? Y : "rgba(255,255,255,0.09)", borderRadius:"4px", background: cBk.players===n ? "rgba(245,200,66,0.1)" : "transparent", color: cBk.players===n ? Y : "rgba(255,255,255,0.38)", fontWeight:700, fontSize:"0.86rem" }}>{n}</button>)}</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0.6rem" }}>
+                  <div style={fg}><label style={lbl}>Number of Players</label>
+                    <div style={{ display:"flex", gap:"5px" }}>{[1,2,3,4].map(n => <button key={n} className="nb" onClick={() => setCBk({...cBk, players:n})} style={{ flex:1, padding:"9px", border:"1px solid", borderColor: cBk.players===n ? Y : "rgba(255,255,255,0.09)", borderRadius:"4px", background: cBk.players===n ? "rgba(245,200,66,0.1)" : "transparent", color: cBk.players===n ? Y : "rgba(255,255,255,0.38)", fontWeight:700, fontSize:"0.86rem" }}>{n}</button>)}</div>
+                  </div>
+                  <div style={fg}><label style={lbl}>Duration (hours)</label>
+                    <div style={{ display:"flex", gap:"5px" }}>{HOUR_OPTIONS.map(n => <button key={n} className="nb" onClick={() => setCBk({...cBk, hours:n})} style={{ flex:1, padding:"9px", border:"1px solid", borderColor: cBk.hours===n ? Y : "rgba(255,255,255,0.09)", borderRadius:"4px", background: cBk.hours===n ? "rgba(245,200,66,0.1)" : "transparent", color: cBk.hours===n ? Y : "rgba(255,255,255,0.38)", fontWeight:700, fontSize:"0.86rem" }}>{n}</button>)}</div>
+                  </div>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"0.6rem" }}>
                   <div style={fg}><label style={lbl}>Payment Method</label>
@@ -574,17 +622,18 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"0.7rem 0.85rem", background:"rgba(245,200,66,0.04)", border:"1px solid rgba(245,200,66,0.12)", borderRadius:"5px", marginBottom:"1rem" }}>
-                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:"0.78rem", color:"rgba(255,255,255,0.45)" }}>Amount ({cBk.players} × ₹{cBkGame ? cBkGame.price : 0})</span>
+                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:"0.78rem", color:"rgba(255,255,255,0.45)" }}>Amount ({cBkConsole ? cBkConsole.name : "—"} · {cBk.players}p · {cBk.hours}hr)</span>
                   <span style={{ fontWeight:900, color:Y, fontSize:"1.1rem" }}>₹{cBkAmount}</span>
                 </div>
                 {cBkMsg && <div style={{ color:"#00C864", fontSize:"0.8rem", fontFamily:"'Inter',sans-serif", marginBottom:"0.7rem" }}>{cBkMsg}</div>}
                 <button style={{ ...btnY, width:"100%" }} onClick={() => {
-                  if(!cBk.customerName.trim() || !cBk.phone.trim() || !cBk.game || !cBk.date || !cBk.slot){ alert("Please fill branch, game, date, slot, customer name and phone."); return; }
+                  if(!cBk.customerName.trim() || !cBk.phone.trim() || !cBk.console || !cBk.date || !cBk.slot){ alert("Please fill branch, console, date, slot, customer name and phone."); return; }
                   const branch = branches.find(b => b.id===cBk.branchId) || branches[0];
+                  if(cBk.bookingStatus===BOOKING_STATUS.CONFIRMED && isSlotTaken(branch.id, cBk.date, cBk.slot, cBk.console)){ alert(`That slot is already confirmed for ${consoleNameOf(cBk.console)} at this branch. Pick another slot.`); return; }
                   const id = "SGZ" + Math.floor(Math.random()*9000+1000);
-                  setBookings(p => [{ id, branchId:branch.id, branchName:branch.name, customerName:cBk.customerName.trim(), phone:cBk.phone.trim(), email:cBk.email.trim(), game:cBk.game, date:cBk.date, slot:cBk.slot, players:cBk.players, amount:cBkAmount, paymentMethod:cBk.paymentMethod, paymentStatus:cBk.paymentStatus, bookingStatus:cBk.bookingStatus }, ...p]);
+                  setBookings(p => [{ id, branchId:branch.id, branchName:branch.name, customerName:cBk.customerName.trim(), phone:cBk.phone.trim(), email:cBk.email.trim(), console:cBk.console, game:consoleNameOf(cBk.console), date:cBk.date, slot:cBk.slot, players:cBk.players, hours:cBk.hours, amount:cBkAmount, paymentMethod:cBk.paymentMethod, paymentStatus:cBk.paymentStatus, bookingStatus:cBk.bookingStatus }, ...p]);
                   setCBkMsg(`Booking ${id} created for ${cBk.customerName.trim()}.`);
-                  setCBk({ branchId:firstBranchId, game:"", date:"", slot:"", customerName:"", phone:"", email:"", players:1, paymentMethod:PAYMENT_METHODS.PAY_AT_STORE, paymentStatus:PAYMENT_STATUS.UNPAID, bookingStatus:BOOKING_STATUS.PENDING });
+                  setCBk({ branchId:firstBranchId, console:"PS5", date:"", slot:"", customerName:"", phone:"", email:"", players:1, hours:1, paymentMethod:PAYMENT_METHODS.PAY_AT_STORE, paymentStatus:PAYMENT_STATUS.UNPAID, bookingStatus:BOOKING_STATUS.PENDING });
                 }}>Create Booking</button>
               </div>
             </div>
@@ -754,22 +803,27 @@ export default function App() {
           {adminTab==="games" && (
             <div>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem", flexWrap:"wrap", gap:"0.5rem" }}>
-                <p style={{ color:"rgba(255,255,255,0.45)", fontFamily:"'Inter',sans-serif", fontSize:"0.82rem" }}>Games shown on the website. {games.length} total.</p>
-                <button style={{ ...btnY, fontSize:"0.7rem", padding:"8px 18px" }} onClick={() => { setEditingGame({ id:null, title:"", price:80, img:"🎮", category:"PS5", duration:"30 min", players:"1-2", desc:"" }); setEditGameOpen(true); }}>+ Add Game</button>
+                <p style={{ color:"rgba(255,255,255,0.45)", fontFamily:"'Inter',sans-serif", fontSize:"0.82rem" }}>Display-only library shown on the website (games are not booked). {games.length} total · use ↑ ↓ to reorder.</p>
+                <button style={{ ...btnY, fontSize:"0.7rem", padding:"8px 18px" }} onClick={() => { setEditingGame({ id:null, title:"", img:"🎮", cover:"", category:"PS5", genre:"", players:"1-2", desc:"" }); setEditGameOpen(true); }}>+ Add Game</button>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:"1px", background:"rgba(245,200,66,0.06)" }}>
-                {games.map(g => (
+                {games.map((g,gi) => (
                   <div key={g.id} style={{ background:BG, padding:"1.25rem" }}>
                     <div style={{ display:"flex", gap:"0.7rem", alignItems:"flex-start", marginBottom:"0.75rem" }}>
-                      <span style={{ fontSize:"2rem" }}>{g.img}</span>
+                      {g.cover
+                        ? <img src={g.cover} alt={g.title} style={{ width:"46px", height:"46px", borderRadius:"6px", objectFit:"cover", flexShrink:0, border:"1px solid rgba(245,200,66,0.2)" }}/>
+                        : <span style={{ fontSize:"2rem" }}>{g.img}</span>}
                       <div style={{ flex:1 }}>
                         <div style={{ fontWeight:900, fontSize:"0.92rem", textTransform:"uppercase" }}>{g.title}</div>
-                        <div style={{ display:"flex", gap:"5px", alignItems:"center", marginTop:"4px" }}>
+                        <div style={{ display:"flex", gap:"5px", alignItems:"center", marginTop:"4px", flexWrap:"wrap" }}>
                           <span style={{ padding:"2px 7px", background:"rgba(245,200,66,0.09)", border:"1px solid rgba(245,200,66,0.22)", borderRadius:"2px", fontSize:"0.57rem", letterSpacing:"0.13em", textTransform:"uppercase", color:Y, fontWeight:700 }}>{g.category}</span>
-                          <span style={{ fontSize:"0.65rem", color:"rgba(255,255,255,0.4)", fontFamily:"'Inter',sans-serif" }}>⏱ {g.duration} · 👥 {g.players}</span>
+                          <span style={{ fontSize:"0.65rem", color:"rgba(255,255,255,0.4)", fontFamily:"'Inter',sans-serif" }}>{g.genre ? `${g.genre} · ` : ""}👥 {g.players}</span>
                         </div>
                       </div>
-                      <div style={{ fontWeight:900, color:Y, fontSize:"1.1rem" }}>₹{g.price}</div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
+                        <button className="nb" title="Move up" disabled={gi===0} onClick={() => setGames(p => { if(gi===0) return p; const a=[...p]; [a[gi-1],a[gi]]=[a[gi],a[gi-1]]; return a; })} style={{ padding:"2px 7px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:"4px", color:gi===0?"rgba(255,255,255,0.2)":Y, fontSize:"0.7rem", cursor:gi===0?"not-allowed":"pointer" }}>↑</button>
+                        <button className="nb" title="Move down" disabled={gi===games.length-1} onClick={() => setGames(p => { if(gi===p.length-1) return p; const a=[...p]; [a[gi+1],a[gi]]=[a[gi],a[gi+1]]; return a; })} style={{ padding:"2px 7px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:"4px", color:gi===games.length-1?"rgba(255,255,255,0.2)":Y, fontSize:"0.7rem", cursor:gi===games.length-1?"not-allowed":"pointer" }}>↓</button>
+                      </div>
                     </div>
                     {g.desc && <div style={{ color:"rgba(255,255,255,0.35)", fontSize:"0.73rem", fontFamily:"'Inter',sans-serif", marginBottom:"0.75rem", lineHeight:1.5 }}>{g.desc}</div>}
                     <div style={{ display:"flex", gap:"5px" }}>
@@ -781,6 +835,60 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {/* DAILY LOG — day-by-day record of bookings + Sharmaji orders */}
+          {adminTab==="dailyLog" && (() => {
+            const byDay = {};
+            bookings.forEach(b => { const d = b.date || "No date"; (byDay[d] = byDay[d] || { bookings:[], orders:[], revenue:0 }); byDay[d].bookings.push(b); if(b.paymentStatus===PAYMENT_STATUS.PAID) byDay[d].revenue += (b.amount||0); });
+            foodOrders.forEach(o => { const d = (o.createdAt||"").split("T")[0] || "No date"; (byDay[d] = byDay[d] || { bookings:[], orders:[], revenue:0 }); byDay[d].orders.push(o); if(o.paymentStatus===PAYMENT_STATUS.PAID) byDay[d].revenue += (o.total||0); });
+            const days = Object.keys(byDay).sort().reverse();
+            const fmtDay = (d) => { if(d==="No date") return d; const dt = new Date(d+"T00:00:00"); return isNaN(dt) ? d : dt.toLocaleDateString("en-IN",{ weekday:"short", day:"numeric", month:"short", year:"numeric" }); };
+            return (
+              <div>
+                <p style={{ color:"rgba(255,255,255,0.45)", fontFamily:"'Inter',sans-serif", fontSize:"0.82rem", marginBottom:"1rem" }}>Day-by-day record of console bookings and Sharmaji orders. {days.length} day{days.length===1?"":"s"} logged.</p>
+                {days.length===0 && <div style={{ padding:"2rem", textAlign:"center", color:"rgba(255,255,255,0.25)", fontFamily:"'Inter',sans-serif", fontSize:"0.85rem" }}>No activity logged yet.</div>}
+                {days.map(d => { const day = byDay[d]; return (
+                  <div key={d} style={adminCard}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:"0.5rem", marginBottom:"0.9rem" }}>
+                      <div style={{ fontWeight:900, fontSize:"0.92rem", textTransform:"uppercase", letterSpacing:"0.04em" }}>📅 {fmtDay(d)}</div>
+                      <div style={{ display:"flex", gap:"6px", flexWrap:"wrap" }}>
+                        {badge(`${day.bookings.length} booking${day.bookings.length===1?"":"s"}`, "#6cc8ff")}
+                        {day.orders.length>0 && badge(`${day.orders.length} order${day.orders.length===1?"":"s"}`, "#9b8cff")}
+                        {badge(`₹${day.revenue} collected`, "#00C864")}
+                      </div>
+                    </div>
+                    {day.bookings.length>0 && <div style={{ overflowX:"auto", marginBottom: day.orders.length>0 ? "0.8rem" : 0 }}>
+                      <table style={{ width:"100%", borderCollapse:"collapse", minWidth:"640px", fontFamily:"'Inter',sans-serif" }}>
+                        <thead><tr>{["Slot","Customer","Console","Players","Hours","Amount","Payment","Status"].map(h => <th key={h} style={{ padding:"6px 9px", textAlign:"left", fontSize:"0.54rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.28)", borderBottom:"1px solid rgba(255,255,255,0.05)", fontWeight:700 }}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {day.bookings.slice().sort((a,b)=>(a.slot||"").localeCompare(b.slot||"")).map(b => (
+                            <tr key={b.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.03)" }}>
+                              <td style={{ padding:"7px 9px", color:Y, fontWeight:700, fontSize:"0.78rem" }}>{b.slot||"—"}</td>
+                              <td style={{ padding:"7px 9px", fontSize:"0.78rem", color:"rgba(255,255,255,0.8)" }}>{b.customerName}<div style={{ fontSize:"0.66rem", color:"rgba(255,255,255,0.28)" }}>{b.phone}</div></td>
+                              <td style={{ padding:"7px 9px", fontSize:"0.78rem", color:"rgba(255,255,255,0.6)" }}>{consoleNameOf(b.console)||b.game}</td>
+                              <td style={{ padding:"7px 9px", fontSize:"0.78rem", color:"rgba(255,255,255,0.55)", textAlign:"center" }}>{b.players}</td>
+                              <td style={{ padding:"7px 9px", fontSize:"0.78rem", color:"rgba(255,255,255,0.55)", textAlign:"center" }}>{b.hours||1}</td>
+                              <td style={{ padding:"7px 9px", fontWeight:700, color:Y, fontSize:"0.8rem" }}>₹{b.amount}</td>
+                              <td style={{ padding:"7px 9px" }}>{badge(b.paymentStatus, pStatusColor(b.paymentStatus))}</td>
+                              <td style={{ padding:"7px 9px" }}>{badge(b.bookingStatus, bStatusColor(b.bookingStatus))}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>}
+                    {day.orders.length>0 && <div style={{ display:"flex", flexDirection:"column", gap:"5px" }}>
+                      {day.orders.map(o => (
+                        <div key={o.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"0.6rem", padding:"7px 10px", background:"rgba(155,140,255,0.05)", border:"1px solid rgba(155,140,255,0.15)", borderRadius:"5px", fontFamily:"'Inter',sans-serif" }}>
+                          <div style={{ fontSize:"0.76rem" }}><span style={{ color:"#9b8cff", fontWeight:700 }}>🍵 {o.id}</span> <span style={{ color:"rgba(255,255,255,0.6)" }}>· {o.customerName}</span><div style={{ fontSize:"0.65rem", color:"rgba(255,255,255,0.3)" }}>{(o.items||[]).reduce((s,i)=>s+i.qty,0)} item(s)</div></div>
+                          <div style={{ fontWeight:800, color:Y, fontSize:"0.82rem" }}>₹{o.total}</div>
+                        </div>
+                      ))}
+                    </div>}
+                  </div>
+                ); })}
+              </div>
+            );
+          })()}
 
           {/* SLOTS */}
           {adminTab==="slots" && (
@@ -1065,12 +1173,26 @@ export default function App() {
                   <div style={fg}><label style={lbl}>Title *</label><input style={inp} value={editingGame.title} onChange={e => setEditingGame({...editingGame, title:e.target.value})}/></div>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0.6rem" }}>
-                  <div style={fg}><label style={lbl}>Category</label><input style={inp} value={editingGame.category} onChange={e => setEditingGame({...editingGame, category:e.target.value})}/></div>
-                  <div style={fg}><label style={lbl}>Price/player (₹) *</label><input type="number" min="0" style={inp} value={editingGame.price} onChange={e => setEditingGame({...editingGame, price:parseInt(e.target.value)||0})}/></div>
+                  <div style={fg}><label style={lbl}>Platform</label>
+                    <select style={inp} value={editingGame.category} onChange={e => setEditingGame({...editingGame, category:e.target.value})}>{CONSOLES.map(c => <option key={c.id} value={c.id}>{c.id}</option>)}</select>
+                  </div>
+                  <div style={fg}><label style={lbl}>Genre</label><input style={inp} placeholder="e.g. Racing" value={editingGame.genre||""} onChange={e => setEditingGame({...editingGame, genre:e.target.value})}/></div>
                 </div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0.6rem" }}>
-                  <div style={fg}><label style={lbl}>Duration</label><input style={inp} value={editingGame.duration} onChange={e => setEditingGame({...editingGame, duration:e.target.value})}/></div>
-                  <div style={fg}><label style={lbl}>Players</label><input style={inp} value={editingGame.players} onChange={e => setEditingGame({...editingGame, players:e.target.value})}/></div>
+                <div style={fg}><label style={lbl}>Players (multiplayer)</label><input style={inp} placeholder="e.g. 1-4" value={editingGame.players} onChange={e => setEditingGame({...editingGame, players:e.target.value})}/></div>
+                <div style={fg}><label style={lbl}>Cover Image</label>
+                  <div style={{ display:"flex", gap:"0.6rem", alignItems:"center" }}>
+                    {editingGame.cover
+                      ? <img src={editingGame.cover} alt="cover" style={{ width:"54px", height:"54px", borderRadius:"7px", objectFit:"cover", border:"1px solid rgba(245,200,66,0.3)", flexShrink:0 }}/>
+                      : <div style={{ width:"54px", height:"54px", borderRadius:"7px", border:"1px dashed rgba(255,255,255,0.18)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.5rem", flexShrink:0 }}>{editingGame.img||"🎮"}</div>}
+                    <div style={{ flex:1, display:"flex", flexDirection:"column", gap:"5px" }}>
+                      <input style={inp} placeholder="Paste image URL…" value={editingGame.cover||""} onChange={e => setEditingGame({...editingGame, cover:e.target.value})}/>
+                      <label style={{ ...btnO, padding:"7px 12px", fontSize:"0.66rem", cursor:"pointer", textAlign:"center" }}>
+                        ⬆ Upload from device
+                        <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => { const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>setEditingGame(g=>({...g, cover:r.result})); r.readAsDataURL(f); }}/>
+                      </label>
+                      {editingGame.cover && <button className="nb" onClick={() => setEditingGame({...editingGame, cover:""})} style={{ color:"#ff6b4a", fontSize:"0.62rem", textAlign:"left", letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:700 }}>Remove cover</button>}
+                    </div>
+                  </div>
                 </div>
                 <div style={fg}><label style={lbl}>Description</label><textarea style={{...inp, minHeight:"60px", resize:"vertical"}} value={editingGame.desc} onChange={e => setEditingGame({...editingGame, desc:e.target.value})}/></div>
                 <div style={{ display:"flex", gap:"0.6rem" }}>
@@ -1209,16 +1331,18 @@ export default function App() {
             {games.filter(g => gFilter==="All" || g.category===gFilter).map(g => (
               <div key={g.id} className="gc" style={{ padding: isMob ? "1rem 0.8rem" : "1.5rem", display:"flex", flexDirection:"column", gap:"0.6rem", cursor:"pointer" }} onClick={() => setDetGame(g)}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                  <span style={{ fontSize: isMob ? "1.8rem" : "2.2rem" }}>{g.img}</span>
+                  {g.cover
+                    ? <img src={g.cover} alt={g.title} style={{ width: isMob ? "46px" : "58px", height: isMob ? "46px" : "58px", borderRadius:"8px", objectFit:"cover", border:"1px solid rgba(245,200,66,0.18)" }}/>
+                    : <span style={{ fontSize: isMob ? "1.8rem" : "2.2rem" }}>{g.img}</span>}
                   <span style={{ padding:"3px 7px", background:"rgba(245,200,66,0.09)", border:"1px solid rgba(245,200,66,0.22)", borderRadius:"2px", fontSize:"0.56rem", letterSpacing:"0.13em", textTransform:"uppercase", color:Y, fontWeight:700 }}>{g.category}</span>
                 </div>
                 <div style={{ fontSize: isMob ? "0.84rem" : "0.95rem", fontWeight:900, letterSpacing:"0.02em", textTransform:"uppercase", fontFamily:"'Rajdhani',sans-serif" }}>{g.title}</div>
-                {!isMob && <div style={{ color:"rgba(255,255,255,0.35)", fontSize:"0.77rem", lineHeight:1.5, fontFamily:"'Inter',sans-serif" }}>{g.desc}</div>}
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <div><div style={{ fontSize:"0.55rem", color:"rgba(255,255,255,0.25)", fontFamily:"'Inter',sans-serif" }}>Per Player</div><div style={{ fontSize: isMob ? "1.05rem" : "1.25rem", fontWeight:900, ...gradTxt, fontFamily:"'Rajdhani',sans-serif" }}>₹{g.price}</div></div>
-                  <div style={{ fontSize:"0.62rem", color:"rgba(255,255,255,0.28)", fontFamily:"'Inter',sans-serif", textAlign:"right" }}><div>⏱ {g.duration}</div><div>👥 {g.players}</div></div>
+                {!isMob && g.desc && <div style={{ color:"rgba(255,255,255,0.35)", fontSize:"0.77rem", lineHeight:1.5, fontFamily:"'Inter',sans-serif" }}>{g.desc}</div>}
+                <div style={{ display:"flex", gap:"6px", alignItems:"center", flexWrap:"wrap", marginTop:"auto", fontFamily:"'Inter',sans-serif" }}>
+                  {g.genre && <span style={{ fontSize:"0.62rem", color:Y, fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase" }}>{g.genre}</span>}
+                  {g.genre && <span style={{ color:"rgba(255,255,255,0.2)" }}>·</span>}
+                  <span style={{ fontSize:"0.62rem", color:"rgba(255,255,255,0.32)" }}>👥 {g.players}</span>
                 </div>
-                <button style={{ ...btnY, width:"100%", padding:"9px", fontSize:"0.72rem", marginTop:"2px" }} onClick={e => { e.stopPropagation(); openBooking(null, g); }}>🎮 Book This Game</button>
               </div>
             ))}
           </div>
@@ -1329,7 +1453,7 @@ export default function App() {
             <p style={{ color:"rgba(255,255,255,0.45)", fontFamily:"'Inter',sans-serif", fontSize:"0.8rem", marginBottom:"1rem" }}>Payment received — see you at {branchNameOf(bk.branchId)}, {bk.name}!</p>
             <div style={{ display:"inline-block", padding:"6px 18px", background:"rgba(245,200,66,0.1)", border:`1px solid rgba(245,200,66,0.35)`, borderRadius:"4px", fontWeight:900, letterSpacing:"0.15em", fontSize:"0.96rem", marginBottom:"1.2rem", color:Y }}>{bkId}</div>
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:"6px", padding:"0.9rem", textAlign:"left", marginBottom:"1.2rem" }}>
-              {[["Branch",branchNameOf(bk.branchId)],["Game",selGame?.title],["Date",bk.date],["Slot",bk.slot],["Players",bk.players],["Payment","Paid (Online)"],["Total",`₹${total}`]].map(([k,v]) => (
+              {[["Branch",branchNameOf(bk.branchId)],["Console",consoleNameOf(bk.console)],["Players",bk.players],["Duration",`${bk.hours} hr`],["Date",bk.date],["Slot",bk.slot],["Payment","Paid (Online)"],["Total",`₹${total}`]].map(([k,v]) => (
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom:"1px solid rgba(255,255,255,0.03)", fontSize:"0.79rem", fontFamily:"'Inter',sans-serif" }}>
                   <span style={{ color:"rgba(255,255,255,0.3)" }}>{k}</span><span style={{ fontWeight:600, color: k==="Total" ? Y : "rgba(255,255,255,0.75)" }}>{v}</span>
                 </div>
@@ -1344,7 +1468,7 @@ export default function App() {
           <>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"0.9rem" }}>
               <div>
-                <div style={{ fontWeight:900, fontSize:"0.9rem", textTransform:"uppercase", letterSpacing:"0.04em" }}>{["","Select Branch","Select Game","Your Details","Date & Slot","Payment"][bStep]}</div>
+                <div style={{ fontWeight:900, fontSize:"0.9rem", textTransform:"uppercase", letterSpacing:"0.04em" }}>{["","Select Branch","Select Console","Your Details","Date & Slot","Payment"][bStep]}</div>
                 <div style={{ color:"rgba(255,255,255,0.28)", fontSize:"0.64rem", fontFamily:"'Inter',sans-serif" }}>Step {bStep} of 5</div>
               </div>
               <button className="nb" style={{ color:"rgba(255,255,255,0.3)", fontSize:"1.2rem" }} onClick={() => setPage("home")}>×</button>
@@ -1370,32 +1494,45 @@ export default function App() {
             </>}
 
             {bStep===2 && <>
-              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:"0.78rem", fontFamily:"'Inter',sans-serif", marginBottom:"0.8rem" }}>Choose a game to play</div>
-              <div style={{ display:"flex", flexDirection:"column", gap:"5px", maxHeight:"310px", overflowY:"auto", paddingRight:"2px" }}>
-                {games.map(g => (
-                  <div key={g.id} onClick={() => setSelGame(g)} style={{ display:"flex", alignItems:"center", gap:"0.75rem", padding:"0.75rem 0.9rem", border:"1px solid", borderColor: selGame?.id===g.id ? Y : "rgba(255,255,255,0.06)", borderRadius:"6px", cursor:"pointer", background: selGame?.id===g.id ? "rgba(245,200,66,0.06)" : "transparent" }}>
-                    <span style={{ fontSize:"1.5rem" }}>{g.img}</span>
-                    <div style={{ flex:1 }}><div style={{ fontWeight:800, fontSize:"0.85rem", textTransform:"uppercase" }}>{g.title}</div><div style={{ fontSize:"0.63rem", color:"rgba(255,255,255,0.28)", fontFamily:"'Inter',sans-serif" }}>{g.category} · {g.duration}</div></div>
-                    <div style={{ fontWeight:900, color:Y, fontSize:"0.88rem" }}>₹{g.price}</div>
+              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:"0.78rem", fontFamily:"'Inter',sans-serif", marginBottom:"0.8rem" }}>Which console would you like to play?</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+                {CONSOLES.map(c => (
+                  <div key={c.id} onClick={() => setBk({...bk, console:c.id})} style={{ display:"flex", alignItems:"center", gap:"0.85rem", padding:"1rem", border:"1px solid", borderColor: bk.console===c.id ? Y : "rgba(255,255,255,0.07)", borderRadius:"8px", cursor:"pointer", background: bk.console===c.id ? "rgba(245,200,66,0.06)" : "rgba(255,255,255,0.02)" }}>
+                    <span style={{ fontSize:"2rem" }}>{c.icon}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:900, fontSize:"0.95rem", textTransform:"uppercase" }}>{c.name}</div>
+                      <div style={{ fontSize:"0.66rem", color:"rgba(255,255,255,0.3)", fontFamily:"'Inter',sans-serif" }}>{c.desc}</div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontWeight:900, color:Y, fontSize:"1rem" }}>₹{c.base}<span style={{ fontSize:"0.6rem", color:"rgba(255,255,255,0.4)" }}>/hr</span></div>
+                      <div style={{ fontSize:"0.58rem", color:"rgba(255,255,255,0.28)", fontFamily:"'Inter',sans-serif" }}>+₹{c.extra}/extra player</div>
+                    </div>
                   </div>
                 ))}
               </div>
               <div style={{ display:"flex", gap:"0.6rem", marginTop:"1rem" }}>
                 <button style={{ ...btnO, flex:1 }} onClick={() => setBStep(1)}>← Back</button>
-                <button disabled={!selGame} style={{ ...btnY, flex:1, opacity: selGame ? 1 : 0.35, cursor: selGame ? "pointer" : "not-allowed" }} onClick={() => setBStep(3)}>Continue →</button>
+                <button disabled={!bk.console} style={{ ...btnY, flex:1, opacity: bk.console ? 1 : 0.35, cursor: bk.console ? "pointer" : "not-allowed" }} onClick={() => setBStep(3)}>Continue →</button>
               </div>
             </>}
 
             {bStep===3 && <>
               <div style={{ padding:"0.6rem 0.8rem", background:"rgba(245,200,66,0.05)", border:"1px solid rgba(245,200,66,0.13)", borderRadius:"5px", marginBottom:"0.9rem", display:"flex", gap:"0.6rem", alignItems:"center" }}>
-                <span style={{ fontSize:"1.3rem" }}>{selGame?.img}</span>
-                <div><div style={{ fontWeight:800, fontSize:"0.83rem", textTransform:"uppercase" }}>{selGame?.title}</div><div style={{ fontSize:"0.67rem", color:"rgba(255,255,255,0.3)", fontFamily:"'Inter',sans-serif" }}>{branchNameOf(bk.branchId)} · ₹{selGame?.price}/player</div></div>
+                <span style={{ fontSize:"1.3rem" }}>{consoleById(bk.console)?.icon}</span>
+                <div><div style={{ fontWeight:800, fontSize:"0.83rem", textTransform:"uppercase" }}>{consoleNameOf(bk.console)}</div><div style={{ fontSize:"0.67rem", color:"rgba(255,255,255,0.3)", fontFamily:"'Inter',sans-serif" }}>{branchNameOf(bk.branchId)} · ₹{consoleById(bk.console)?.base}/hr + ₹{consoleById(bk.console)?.extra}/extra player</div></div>
               </div>
               <div style={fg}><label style={lbl}>Full Name *</label><input style={inp} value={bk.name} onChange={e => setBk({...bk,name:e.target.value})}/></div>
               <div style={fg}><label style={lbl}>Phone *</label><input style={inp} value={bk.phone} onChange={e => setBk({...bk,phone:e.target.value})}/></div>
               <div style={fg}><label style={lbl}>Email (optional)</label><input style={inp} value={bk.email} onChange={e => setBk({...bk,email:e.target.value})}/></div>
               <div style={fg}><label style={lbl}>Number of Players</label>
                 <div style={{ display:"flex", gap:"5px" }}>{[1,2,3,4].map(n => <button key={n} className="nb" onClick={() => setBk({...bk,players:n})} style={{ flex:1, padding:"9px", border:"1px solid", borderColor: bk.players===n ? Y : "rgba(255,255,255,0.09)", borderRadius:"4px", background: bk.players===n ? "rgba(245,200,66,0.1)" : "transparent", color: bk.players===n ? Y : "rgba(255,255,255,0.38)", fontWeight:700, fontSize:"0.86rem" }}>{n}</button>)}</div>
+              </div>
+              <div style={fg}><label style={lbl}>Duration (hours)</label>
+                <div style={{ display:"flex", gap:"5px" }}>{HOUR_OPTIONS.map(n => <button key={n} className="nb" onClick={() => setBk({...bk,hours:n})} style={{ flex:1, padding:"9px", border:"1px solid", borderColor: bk.hours===n ? Y : "rgba(255,255,255,0.09)", borderRadius:"4px", background: bk.hours===n ? "rgba(245,200,66,0.1)" : "transparent", color: bk.hours===n ? Y : "rgba(255,255,255,0.38)", fontWeight:700, fontSize:"0.86rem" }}>{n} hr</button>)}</div>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", padding:"0.6rem 0.8rem", background:"rgba(245,200,66,0.04)", border:"1px solid rgba(245,200,66,0.12)", borderRadius:"5px", marginBottom:"0.9rem", fontFamily:"'Inter',sans-serif" }}>
+                <span style={{ fontSize:"0.76rem", color:"rgba(255,255,255,0.45)" }}>{bk.players}p · {bk.hours}hr</span>
+                <span style={{ fontWeight:900, color:Y, fontSize:"1rem" }}>₹{total}</span>
               </div>
               <div style={{ display:"flex", gap:"0.6rem" }}>
                 <button style={{ ...btnO, flex:1 }} onClick={() => setBStep(2)}>← Back</button>
@@ -1404,15 +1541,27 @@ export default function App() {
             </>}
 
             {bStep===4 && <>
-              <div style={fg}><label style={lbl}>Select Date *</label><input type="date" style={inp} min={new Date().toISOString().split("T")[0]} value={bk.date} onChange={e => setBk({...bk,date:e.target.value})}/></div>
-              {bk.date && <div style={fg}>
-                <label style={lbl}>Select Time Slot *</label>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(78px,1fr))", gap:"5px", marginTop:"4px" }}>
-                  {slots.map(s => <button key={s} className="slot nb" onClick={() => setBk({...bk,slot:s})} style={{ border:"1px solid", borderColor: bk.slot===s ? Y : "rgba(255,255,255,0.08)", background: bk.slot===s ? "rgba(245,200,66,0.1)" : "transparent", color: bk.slot===s ? Y : "rgba(255,255,255,0.4)" }}>{s}</button>)}
-                </div>
-              </div>}
+              <div style={fg}><label style={lbl}>Select Date *</label><input type="date" style={inp} min={new Date().toISOString().split("T")[0]} value={bk.date} onChange={e => setBk({...bk, date:e.target.value, slot:""})}/></div>
+              {!bk.date && <div style={{ padding:"0.7rem 0.85rem", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"5px", marginBottom:"0.9rem", fontFamily:"'Inter',sans-serif", fontSize:"0.74rem", color:"rgba(255,255,255,0.4)" }}>Pick a date to see available time slots.</div>}
+              {bk.date && (() => {
+                const openSlots = slots.filter(s => !isSlotTaken(bk.branchId, bk.date, s, bk.console));
+                return <div style={fg}>
+                <label style={lbl}>Select Time Slot * — {consoleNameOf(bk.console)}</label>
+                {slots.length===0
+                  ? <div style={{ padding:"0.7rem", fontFamily:"'Inter',sans-serif", fontSize:"0.74rem", color:"rgba(255,255,255,0.4)" }}>No time slots are set up yet.</div>
+                  : openSlots.length===0
+                    ? <div style={{ padding:"0.7rem 0.85rem", background:"rgba(255,107,74,0.06)", border:"1px solid rgba(255,107,74,0.25)", borderRadius:"5px", fontFamily:"'Inter',sans-serif", fontSize:"0.75rem", color:"#ff9d3a" }}>All {consoleNameOf(bk.console)} slots are booked on this date. Please choose another date or console.</div>
+                    : <>
+                      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(78px,1fr))", gap:"5px", marginTop:"4px" }}>
+                        {slots.map(s => { const taken = isSlotTaken(bk.branchId, bk.date, s, bk.console); return (
+                          <button key={s} className={taken ? "nb" : "slot nb"} disabled={taken} onClick={() => !taken && setBk({...bk,slot:s})} title={taken ? "Already booked" : ""} style={{ padding:"8px 3px", borderRadius:"4px", fontSize: taken ? "0.6rem" : "0.72rem", fontFamily:"'Inter',sans-serif", border:"1px solid", borderColor: taken ? "rgba(255,255,255,0.05)" : (bk.slot===s ? Y : "rgba(255,255,255,0.08)"), background: taken ? "rgba(255,255,255,0.02)" : (bk.slot===s ? "rgba(245,200,66,0.1)" : "transparent"), color: taken ? "rgba(255,255,255,0.25)" : (bk.slot===s ? Y : "rgba(255,255,255,0.4)"), cursor: taken ? "not-allowed" : "pointer", textDecoration: taken ? "line-through" : "none" }}>{taken ? `${s} · Booked` : s}</button>
+                        ); })}
+                      </div>
+                      {!bk.slot && <div style={{ marginTop:"6px", fontFamily:"'Inter',sans-serif", fontSize:"0.7rem", color:"rgba(255,255,255,0.35)" }}>Please select an available time slot to continue.</div>}
+                    </>}
+              </div>; })()}
               <div style={{ padding:"0.8rem", background:"rgba(255,255,255,0.02)", borderRadius:"6px", marginBottom:"0.9rem", fontFamily:"'Inter',sans-serif" }}>
-                {[["Branch",branchNameOf(bk.branchId)],["Game",selGame?.title],[`${bk.players}p × ₹${selGame?.price}`,`= ₹${total}`]].map(([k,v]) => <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:"0.78rem", color:"rgba(255,255,255,0.35)", marginBottom:"3px" }}><span>{k}</span><span style={{ color:"rgba(255,255,255,0.6)" }}>{v}</span></div>)}
+                {[["Branch",branchNameOf(bk.branchId)],["Console",consoleNameOf(bk.console)],[`${bk.players}p · ${bk.hours}hr`,`₹${total}`]].map(([k,v]) => <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:"0.78rem", color:"rgba(255,255,255,0.35)", marginBottom:"3px" }}><span>{k}</span><span style={{ color:"rgba(255,255,255,0.6)" }}>{v}</span></div>)}
                 <div style={{ display:"flex", justifyContent:"space-between", fontWeight:900, color:Y, paddingTop:"0.5rem", borderTop:"1px solid rgba(255,255,255,0.05)", fontSize:"0.95rem" }}><span>Total</span><span>₹{total}</span></div>
               </div>
               <div style={{ display:"flex", gap:"0.6rem" }}>
@@ -1424,7 +1573,7 @@ export default function App() {
             {bStep===5 && <>
               <div style={{ padding:"0.8rem", background:"rgba(245,200,66,0.04)", border:"1px solid rgba(245,200,66,0.12)", borderRadius:"5px", marginBottom:"1rem", fontFamily:"'Inter',sans-serif" }}>
                 <div style={{ fontWeight:800, textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:"0.55rem", fontSize:"0.75rem" }}>Order Summary</div>
-                {[["Branch",branchNameOf(bk.branchId)],["Game",selGame?.title],["Date",bk.date],["Slot",bk.slot],["Players",bk.players],["Duration",selGame?.duration]].map(([k,v]) => <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:"0.76rem", color:"rgba(255,255,255,0.35)", marginBottom:"2px" }}><span>{k}</span><span style={{ color:"rgba(255,255,255,0.6)" }}>{v}</span></div>)}
+                {[["Branch",branchNameOf(bk.branchId)],["Console",consoleNameOf(bk.console)],["Players",bk.players],["Duration",`${bk.hours} hr`],["Date",bk.date],["Slot",bk.slot]].map(([k,v]) => <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:"0.76rem", color:"rgba(255,255,255,0.35)", marginBottom:"2px" }}><span>{k}</span><span style={{ color:"rgba(255,255,255,0.6)" }}>{v}</span></div>)}
                 <div style={{ display:"flex", justifyContent:"space-between", fontWeight:900, color:Y, paddingTop:"0.5rem", borderTop:"1px solid rgba(255,255,255,0.05)", fontSize:"0.95rem" }}><span>Total</span><span>₹{total}</span></div>
               </div>
               <label style={{ ...lbl, marginBottom:"0.6rem" }}>Online Payment Method</label>
@@ -1459,19 +1608,17 @@ export default function App() {
     <div style={{ position:"fixed", inset:0, zIndex:900, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem", background:"rgba(0,0,0,0.88)", backdropFilter:"blur(10px)" }} onClick={() => setDetGame(null)}>
       <div style={{ ...mBox, maxWidth:"440px" }} onClick={e => e.stopPropagation()}>
         <button className="nb" style={{ position:"absolute", top:"0.85rem", right:"0.85rem", color:"rgba(255,255,255,0.3)", fontSize:"1.2rem" }} onClick={() => setDetGame(null)}>×</button>
-        <div style={{ fontSize:"2.7rem", marginBottom:"0.65rem" }}>{detGame.img}</div>
+        {detGame.cover
+          ? <img src={detGame.cover} alt={detGame.title} style={{ width:"100%", height:"180px", objectFit:"cover", borderRadius:"10px", marginBottom:"0.8rem", border:"1px solid rgba(245,200,66,0.18)" }}/>
+          : <div style={{ fontSize:"2.7rem", marginBottom:"0.65rem" }}>{detGame.img}</div>}
         <div style={{ display:"flex", gap:"5px", marginBottom:"0.8rem", flexWrap:"wrap" }}>
-          {[[detGame.category,"rgba(245,200,66"],[`⏱ ${detGame.duration}`,"rgba(100,100,255"],[`👥 ${detGame.players}`,"rgba(0,180,100"]].map(([t,c]) => (
+          {[[detGame.category,"rgba(245,200,66"], ...(detGame.genre ? [[detGame.genre,"rgba(100,100,255"]] : []), [`👥 ${detGame.players}`,"rgba(0,180,100"]].map(([t,c]) => (
             <span key={t} style={{ padding:"3px 7px", background:`${c},0.1)`, border:`1px solid ${c},0.24)`, borderRadius:"2px", fontSize:"0.57rem", letterSpacing:"0.12em", textTransform:"uppercase", fontWeight:700, color:`${c},0.8)` }}>{t}</span>
           ))}
         </div>
         <h3 style={{ fontSize:"1.5rem", fontWeight:900, textTransform:"uppercase", marginBottom:"0.5rem", fontFamily:"'Rajdhani',sans-serif" }}>{detGame.title}</h3>
         <p style={{ color:"rgba(255,255,255,0.45)", fontFamily:"'Inter',sans-serif", fontSize:"0.82rem", lineHeight:1.7, marginBottom:"1rem" }}>{detGame.desc}</p>
-        <div style={{ padding:"0.88rem", background:"rgba(245,200,66,0.04)", border:"1px solid rgba(245,200,66,0.13)", borderRadius:"6px", marginBottom:"1rem", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div><div style={{ fontSize:"0.55rem", color:"rgba(255,255,255,0.28)", letterSpacing:"0.13em", textTransform:"uppercase", fontFamily:"'Inter',sans-serif" }}>Per Player</div><div style={{ fontSize:"1.6rem", fontWeight:900, ...gradTxt, fontFamily:"'Rajdhani',sans-serif" }}>₹{detGame.price}</div></div>
-          <div style={{ textAlign:"right" }}><div style={{ fontSize:"0.55rem", color:"rgba(255,255,255,0.28)", letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:"'Inter',sans-serif" }}>Session</div><div style={{ fontWeight:700, color:"rgba(255,255,255,0.58)" }}>{detGame.duration}</div></div>
-        </div>
-        <button style={{ ...btnY, width:"100%" }} onClick={() => { const g = detGame; setDetGame(null); openBooking(null, g); }}>🎮 Book This Game</button>
+        <div style={{ padding:"0.7rem 0.85rem", background:"rgba(245,200,66,0.04)", border:"1px solid rgba(245,200,66,0.13)", borderRadius:"6px", fontFamily:"'Inter',sans-serif", fontSize:"0.74rem", color:"rgba(255,255,255,0.45)", textAlign:"center" }}>Available to play on {consoleNameOf(detGame.category) || detGame.category} at Star Game Zone</div>
       </div>
     </div>
   );
@@ -1608,18 +1755,8 @@ export default function App() {
       </div>
 
       {isMob ? (
-        <div style={{ minHeight:"100vh", background:"#05020c", display:"flex", flexDirection:"column", alignItems:"center", paddingTop:"40px", paddingBottom:"2rem" }}>
-          <div style={{ width:"100%", maxWidth:"390px", background:"#16122c", borderRadius:"44px", padding:"4px", boxShadow:"0 0 0 1px rgba(245,200,66,0.1), 0 40px 80px rgba(0,0,0,0.75)" }}>
-            <div style={{ height:"32px", background:BG, borderRadius:"40px 40px 0 0", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
-              <div style={{ width:"10px", height:"10px", borderRadius:"50%", background:"rgba(255,255,255,0.06)" }}/>
-              <div style={{ width:"66px", height:"10px", borderRadius:"5px", background:"rgba(255,255,255,0.06)" }}/>
-              <div style={{ width:"10px", height:"10px", borderRadius:"50%", background:"rgba(255,255,255,0.06)" }}/>
-            </div>
-            <div style={{ background:BG, maxHeight:"76vh", overflowY:"auto", overflowX:"hidden" }}>{Site()}</div>
-            <div style={{ height:"28px", background:BG, borderRadius:"0 0 40px 40px", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <div style={{ width:"100px", height:"4px", borderRadius:"3px", background:"rgba(255,255,255,0.1)" }}/>
-            </div>
-          </div>
+        <div style={{ minHeight:"100vh", background:"#05020c", display:"flex", justifyContent:"center", paddingTop:"1rem", paddingBottom:"2rem" }}>
+          <div style={{ width:"100%", maxWidth:"390px", background:BG, borderRadius:"12px", overflow:"hidden", boxShadow:"0 0 0 1px rgba(245,200,66,0.08)" }}>{Site()}</div>
         </div>
       ) : Site()}
     </div>
